@@ -71,6 +71,15 @@
                 elm_output_img.height = scale * elm_output_img.naturalHeight;
               });
             }
+            else if(dat.output_type == "execute_result"){
+              let elm_output_html = document.createElement("div");
+              elm_output_html.className = "outputexecrslt";
+              elm_output_html.innerHTML = dat.data['text/html'].join(""); // plain text
+              //elm_output_html.style.backgroundColor = "rgb(248,248,248)"; // '#xxxxxx' style does not work in bookmarklet
+              //elm_output_html.style.padding = "3pt";
+              //elm_output_html.style.margin = "5pt";
+              elm_outputs.appendChild(elm_output_html);
+            }
           });
 
           let elm_cell = document.createElement("div");
