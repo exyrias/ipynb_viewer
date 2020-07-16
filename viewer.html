@@ -68,6 +68,8 @@
   <div id="imgarea"></div>
   <script>
     const setTextElement = ((elm, text) => {
+      // remove CSI
+      text = text.replace(/\u001b\[[\d;]*\dm/g, '');
       // convert "<" and ">" in text
       elm.appendChild(document.createTextNode(text));
     });
@@ -154,6 +156,13 @@
       return elm;
     });
 
+    const createOutputError = ((dat) => {
+      const elm = document.createElement("pre");
+      elm.className = "outputtext box";
+      setTextElement(elm, dat.traceback.join(""));
+      return elm;
+    });
+
     const createOutput = ((cell) => {
       const elm_output = document.createElement("div");
       elm_output.className = "output";
@@ -171,16 +180,19 @@
           if (dat.output_type === "stream") {
             elm_output_holder.appendChild(createOutputText(dat));
           }
-          else if (dat.output_type === "display_data"){
+          else if (dat.output_type === "display_data") {
             elm_output_holder.appendChild(createOutputImage(dat));
           }
-          else if (dat.output_type == "execute_result"){
+          else if (dat.output_type == "execute_result") {
             if (dat.data['text/html'] !== undefined) {
               elm_output_holder.appendChild(createOutputHtmlResult(dat));
             }
             else {
               elm_output_holder.appendChild(createOutputTextResult(dat));
             }
+          }
+          else if (dat.output_type == "error") {
+            elm_output_holder.appendChild(createOutputError(dat));
           }
         });
       }
