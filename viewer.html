@@ -168,7 +168,7 @@
 
     const createOutputError = ((dat) => {
       const elm = createElementClass("pre", "outputtext box");
-      setTextElement(elm, dat.traceback.join(""));
+      setTextElement(elm, dat.traceback.join("\n"));
       return elm;
     });
 
