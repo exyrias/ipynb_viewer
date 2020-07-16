@@ -135,10 +135,17 @@
       return elm;
     });
 
-    const createOutputTable = ((dat) => {
+    const createOutputHtmlResult = ((dat) => {
       let elm = document.createElement("div");
       elm.className = "outputtable box";
       elm.innerHTML = dat.data['text/html'].join(""); // plain text
+      return elm;
+    });
+
+    const createOutputTextResult = ((dat) => {
+      let elm = document.createElement("pre");
+      elm.className = "outputtext box";
+      elm.innerHTML = dat.data['text/plain'].join(""); // plain text
       return elm;
     });
 
@@ -159,11 +166,16 @@
           if (dat.output_type === "stream") {
             elm_output_holder.appendChild(createOutputText(dat));
           }
-          else if(dat.output_type === "display_data"){
+          else if (dat.output_type === "display_data"){
             elm_output_holder.appendChild(createOutputImage(dat));
           }
-          else if(dat.output_type == "execute_result"){
-            elm_output_holder.appendChild(createOutputTable(dat));
+          else if (dat.output_type == "execute_result"){
+            if (dat.data['text/html'] !== undefined) {
+              elm_output_holder.appendChild(createOutputHtmlResult(dat));
+            }
+            else {
+              elm_output_holder.appendChild(createOutputTextResult(dat));
+            }
           }
         });
       }
