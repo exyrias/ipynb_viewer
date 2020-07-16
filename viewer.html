@@ -8,6 +8,14 @@
       display: flex;
       flex-direction: column;
     }
+    .input-holder {
+      margin: 3px;
+    }
+    .output-holder {
+      display: flex;
+      flex-direction: column;
+      margin: 3px;
+    }
     .input {
       display: flex;
     }
@@ -17,14 +25,15 @@
     .prompt {
       font-size: 12px;
       text-align: right;
-      margin: 5px;
-      padding: 3px;
+      margin: 0px 5px 0px 5px;
+      padding: 3px 3px 3px 3px;
       width: 90px;
       flex-shrink: 0;
     }
     .box {
-      margin: 5px;
-      padding: 3px;
+      margin: 0px 5px 0px 5px;
+      padding: 3px 3px 3px 3px;
+      flex-grow: 1;
     }
     .code {
       background-color: rgb(247, 247, 247);
@@ -33,11 +42,6 @@
       border-color: rgb(207, 207, 207);
       border-width: 1px;
       flex-grow: 1;
-    }
-    .output-holder {
-      flex-grow: 1;
-      display: flex;
-      flex-direction: column;
     }
     .outputtable table {
         font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -74,40 +78,48 @@
       elm.appendChild(document.createTextNode(text));
     });
 
-    const createPrompt = ((type, num) => {
-      const elm = document.createElement("pre");
-      elm.className = "prompt";
-      num = (num === null) ? "" : num;
-      elm.innerHTML = (type === "in" ? "In " : "Out") + "[" + num + "]";
+    const createElementClass = ((tag, className) => {
+      const elm = document.createElement(tag);
+      elm.className = className;
       return elm;
     });
 
+    const createPrompt = ((type, num) => {
+      const elm = createElementClass("pre", "prompt");
+      if (num === undefined) {
+        return elm;
+      }
+      else {
+        num = (num === null) ? " " : num;
+        elm.innerHTML = (type === "in" ? "In " : "Out") + "[" + num + "]";
+        return elm;
+      }
+    });
+
     const createInput = ((cell) => {
-      const elm_input = document.createElement("div");
-      elm_input.className = "input";
+      const elm_holder = createElementClass("div", "input-holder");
+      const elm_input = createElementClass("div", "input");
+      elm_holder.appendChild(elm_input);
 
       // prompt ( In [_], Out[] )
       elm_input.appendChild(createPrompt("in", cell.execution_count));
 
       // code block
-      const elm_source = document.createElement("pre");
-      elm_source.className = "code box";
+      const elm_source = createElementClass("pre", "code box");
       setTextElement(elm_source, cell.source.join(""));
       elm_input.appendChild(elm_source);
 
-      return elm_input;
+      return elm_holder;
     });
 
     const createOutputText = ((dat) => {
-      const elm = document.createElement("pre");
-      elm.className = "outputtext box";
+      const elm = createElementClass("pre", "outputtext box");
       setTextElement(elm, dat.text.join(""));
       return elm;
     });
 
     const createOutputImage = ((dat) => {
-      const elm = document.createElement("div");
-      elm.className = "outputimg box";
+      const elm = createElementClass("div", "outputimg box");
 
       // create size changer button
       const elm_small_btn = document.createElement("button");
@@ -143,66 +155,57 @@
     });
 
     const createOutputHtmlResult = ((dat) => {
-      const elm = document.createElement("div");
-      elm.className = "outputtable box";
+      const elm = createElementClass("div", "outputtable box");
       elm.innerHTML = dat.data['text/html'].join("");
       return elm;
     });
 
     const createOutputTextResult = ((dat) => {
-      const elm = document.createElement("pre");
-      elm.className = "outputtext box";
+      const elm = createElementClass("pre", "outputtext box");
       setTextElement(elm, dat.data['text/plain'].join(""));
       return elm;
     });
 
     const createOutputError = ((dat) => {
-      const elm = document.createElement("pre");
-      elm.className = "outputtext box";
+      const elm = createElementClass("pre", "outputtext box");
       setTextElement(elm, dat.traceback.join(""));
       return elm;
     });
 
     const createOutput = ((cell) => {
-      const elm_output = document.createElement("div");
-      elm_output.className = "output";
+      const elm_output_holder = createElementClass("div", "output-holder");
 
-      if (cell.outputs.length > 0) {
+      cell.outputs.forEach(dat => {
+        const elm_output = createElementClass("div", "output");
+        elm_output_holder.appendChild(elm_output);
+
         // prompt
-        elm_output.appendChild(createPrompt("out", cell.execution_count));
+        elm_output.appendChild(createPrompt("out", dat.execution_count));
 
-        // output holder
-        const elm_output_holder = document.createElement("div");
-        elm_output_holder.className = "output-holder";
-        elm_output.appendChild(elm_output_holder);
+        if (dat.output_type === "stream") {
+          elm_output.appendChild(createOutputText(dat));
+        }
+        else if (dat.output_type === "display_data") {
+          elm_output.appendChild(createOutputImage(dat));
+        }
+        else if (dat.output_type == "execute_result") {
+          if (dat.data['text/html'] !== undefined) {
+            elm_output.appendChild(createOutputHtmlResult(dat));
+          }
+          else {
+            elm_output.appendChild(createOutputTextResult(dat));
+          }
+        }
+        else if (dat.output_type == "error") {
+          elm_output.appendChild(createOutputError(dat));
+        }
+      });
 
-        cell.outputs.forEach(dat => {
-          if (dat.output_type === "stream") {
-            elm_output_holder.appendChild(createOutputText(dat));
-          }
-          else if (dat.output_type === "display_data") {
-            elm_output_holder.appendChild(createOutputImage(dat));
-          }
-          else if (dat.output_type == "execute_result") {
-            if (dat.data['text/html'] !== undefined) {
-              elm_output_holder.appendChild(createOutputHtmlResult(dat));
-            }
-            else {
-              elm_output_holder.appendChild(createOutputTextResult(dat));
-            }
-          }
-          else if (dat.output_type == "error") {
-            elm_output_holder.appendChild(createOutputError(dat));
-          }
-        });
-      }
-
-      return elm_output;
+      return elm_output_holder;
     });
 
     const createCell = ((cell) => {
-      const elm_cell = document.createElement("div");
-      elm_cell.className = "cell";
+      const elm_cell = createElementClass("div", "cell");
       elm_cell.appendChild(createInput(cell));
       elm_cell.appendChild(createOutput(cell));
       return elm_cell;
